@@ -324,13 +324,107 @@
   // 카드 아래 "처음으로" 버튼
   homeBtn.addEventListener("click", () => go(0));
 
-  // 카드 아래 "PDF 저장" 버튼
-  // 브라우저 인쇄 창을 열어요 → 대상(프린터)을 "PDF로 저장"으로 고르면 카드 한 장이 PDF 한 쪽이 돼요.
-  pdfBtn.addEventListener("click", () => {
-    clearInterval(typingTimer);
-    // 타이핑 효과 중이라 글자가 덜 나온 검색창이 없도록 전부 채워 둬요
-    track.querySelectorAll(".qtext").forEach((el) => { el.textContent = el.dataset.text; });
-    window.print();
+  /* ---------- 카드 아래 "PDF 저장" 버튼 ----------
+     인쇄 창을 거치지 않고 바로 PDF 파일을 내려받아요.
+     카드만 한 장씩 그림으로 찍어서 PDF 한 쪽에 하나씩 넣어요.
+     (날짜·링크·버튼 같은 건 들어가지 않아요)
+     - html2canvas: 화면의 카드를 그림으로 찍어 주는 도구
+     - jsPDF: 그림들을 모아 PDF 파일로 만들어 주는 도구
+     두 도구는 버튼을 처음 누를 때만 불러와요. */
+  const PDF_FILE = "대구대_문헌정보학과_카드뉴스.pdf";
+  const PDF_SCALE = 2;  // 2배 해상도로 찍어서 글자가 선명하게
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error("불러오기 실패: " + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function loadPdfTools() {
+    if (!window.html2canvas) await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+    if (!window.jspdf) await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+  }
+
+  // 찍기 직전, 복사본 화면에서 i번째 카드만 남기고 정리해요 (진짜 화면은 그대로)
+  function prepareClone(doc, i) {
+    const t = doc.getElementById("track");
+    t.style.transform = "none";
+    t.style.transition = "none";
+    const st = doc.getElementById("stage");
+    st.style.cssText = `width:${CARD_W}px;height:${CARD_H}px;overflow:visible;border-radius:0;box-shadow:none;`;
+    // 카드 말고 다른 것(위 안내, 아래 버튼)은 복사본에서 숨겨요
+    doc.querySelectorAll(".intro, .controls, .extra-actions").forEach((el) => { el.style.display = "none"; });
+    const v = doc.querySelector(".viewer");
+    v.style.cssText = "display:block;height:auto;padding:0;";
+    t.querySelectorAll(".card").forEach((el, k) => { if (k !== i) el.style.display = "none"; });
+
+    const card = t.querySelector(`.card[data-index="${i}"]`);
+    // 검색창 글자를 다 채우고, 깜빡이는 커서는 숨겨요
+    card.querySelectorAll(".qtext").forEach((el) => { el.textContent = el.dataset.text; });
+    card.querySelectorAll(".caret, .restart-btn").forEach((el) => { el.style.display = "none"; }); // PDF에선 못 누르는 버튼도 숨겨요
+
+    // html2canvas는 object-fit을 못 그려서 그림이 찌그러져요 → 같은 모양의 배경 그림으로 바꿔요
+    card.querySelectorAll("img").forEach((img) => {
+      const cs = doc.defaultView.getComputedStyle(img);
+      if (cs.objectFit !== "contain" && cs.objectFit !== "cover") return;
+      const box = doc.createElement("div");
+      box.className = img.className;
+      ["position", "top", "right", "bottom", "left", "width", "height", "display", "margin", "border-radius", "z-index"]
+        .forEach((p) => box.style.setProperty(p, cs.getPropertyValue(p)));
+      box.style.backgroundImage = `url("${img.src}")`;
+      box.style.backgroundSize = cs.objectFit;
+      box.style.backgroundPosition = cs.objectPosition;
+      box.style.backgroundRepeat = "no-repeat";
+      img.replaceWith(box);
+    });
+  }
+
+  let pdfBusy = false;
+  pdfBtn.addEventListener("click", async () => {
+    if (pdfBusy) return;
+    pdfBusy = true;
+    const label = pdfBtn.innerHTML;
+    pdfBtn.disabled = true;
+    try {
+      pdfBtn.textContent = "PDF 준비 중…";
+      await loadPdfTools();
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [CARD_W, CARD_H], hotfixes: ["px_scaling"] });
+      const cardEls = track.querySelectorAll(".card");
+
+      for (let i = 0; i < cardEls.length; i++) {
+        pdfBtn.textContent = `PDF 만드는 중… ${i + 1} / ${cardEls.length}`;
+        const canvas = await html2canvas(cardEls[i], {
+          scale: PDF_SCALE,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false,
+          width: CARD_W,
+          height: CARD_H,
+          windowWidth: CARD_W,
+          windowHeight: CARD_H,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (doc) => prepareClone(doc, i)
+        });
+        if (i > 0) pdf.addPage([CARD_W, CARD_H], "portrait");
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, CARD_W, CARD_H);
+      }
+      pdf.save(PDF_FILE);
+    } catch (err) {
+      console.error(err);
+      alert("PDF를 만들지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
+    } finally {
+      pdfBtn.innerHTML = label;
+      pdfBtn.disabled = false;
+      pdfBusy = false;
+    }
   });
   nextBtn.addEventListener("click", () => go(current + 1));
 
