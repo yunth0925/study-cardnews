@@ -124,6 +124,29 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- 카드 아래 버튼 (처음으로 / PDF 저장) ---------- */
+.extra-actions {
+  display: flex;
+  gap: 10px;
+  width: min(100% - 32px, 540px);
+}
+.action-btn {
+  flex: 1;
+  height: 40px;
+  border-radius: 20px;
+  border: 1.5px solid var(--line);
+  background: var(--bg-white);
+  color: var(--green-dark);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.action-btn:hover { border-color: var(--mint-line); }
+.action-btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
+.action-btn.primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
+.action-btn:focus-visible { outline: 3px solid var(--mint-line); outline-offset: 2px; }
+
 /* =========================================================
    카드 공통
    ========================================================= */
@@ -761,4 +784,20 @@ body {
   font-family: var(--font-title);
   font-weight: 700;
   letter-spacing: -0.02em;
+}
+
+/* =========================================================
+   PDF 저장(인쇄)용 — 카드 한 장 = PDF 한 쪽
+   ========================================================= */
+@page { size: 540px 675px; margin: 0; }
+@media print {
+  html, body { height: auto; overflow: visible; background: #fff; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .viewer { display: block; height: auto; padding: 0; }
+  .controls, .extra-actions, .restart-btn { display: none !important; }
+  .stage { width: auto !important; height: auto !important; overflow: visible; border-radius: 0 !important; box-shadow: none; }
+  .track { display: block; width: auto; transform: none !important; transition: none; }
+  .card { break-after: page; page-break-after: always; }
+  .card:last-child { break-after: auto; page-break-after: auto; }
+  .caret { display: none; }
 }

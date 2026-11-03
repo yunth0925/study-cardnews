@@ -24,6 +24,8 @@
   const nextBtn = document.getElementById("nextBtn");
   const progressFill = document.getElementById("progressFill");
   const progressText = document.getElementById("progressText");
+  const homeBtn = document.getElementById("homeBtn");
+  const pdfBtn = document.getElementById("pdfBtn");
 
   let current = 0;
   let scale = 1;
@@ -261,7 +263,7 @@
 
   /* ---------- 화면에 맞게 확대/축소 ---------- */
   function fit() {
-    const controlsH = 44 + 12 + 24; // 조작 줄 높이 + 간격 + 위아래 여백
+    const controlsH = 44 + 12 + 40 + 12 + 24; // 조작 줄 + 간격 + 아래 버튼 줄 + 간격 + 위아래 여백
     const availW = window.innerWidth;
     const availH = window.innerHeight - controlsH;
     scale = Math.min(availW / CARD_W, availH / CARD_H);
@@ -317,6 +319,18 @@
   }
 
   prevBtn.addEventListener("click", () => go(current - 1));
+
+  // 카드 아래 "처음으로" 버튼
+  homeBtn.addEventListener("click", () => go(0));
+
+  // 카드 아래 "PDF 저장" 버튼
+  // 브라우저 인쇄 창을 열어요 → 대상(프린터)을 "PDF로 저장"으로 고르면 카드 한 장이 PDF 한 쪽이 돼요.
+  pdfBtn.addEventListener("click", () => {
+    clearInterval(typingTimer);
+    // 타이핑 효과 중이라 글자가 덜 나온 검색창이 없도록 전부 채워 둬요
+    track.querySelectorAll(".qtext").forEach((el) => { el.textContent = el.dataset.text; });
+    window.print();
+  });
   nextBtn.addEventListener("click", () => go(current + 1));
 
   // "처음으로 돌아가기" 버튼
