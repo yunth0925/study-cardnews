@@ -1,0 +1,756 @@
+/* =========================================================
+   대구대 문헌정보학과 카드뉴스 — 스타일
+   카드는 540×675(4:5) 크기로 그리고, 화면 크기에 맞춰
+   main.js가 통째로 확대/축소해요.
+   ========================================================= */
+
+/* ---------- 1. 색 (PRD 3장) ---------- */
+:root {
+  --bg-card: #FBFAF5;      /* 카드 배경 (크림) */
+  --bg-white: #FFFFFF;     /* 헤더/검색창 */
+  --text: #2C2C2A;         /* 본문 글자 */
+  --text-sub: #5F5E5A;     /* 보조 글자 */
+  --text-mute: #888780;    /* 연한 보조 글자 */
+  --green: #1D9E75;        /* 포인트 초록 */
+  --green-dark: #0F6E56;   /* 진한 초록 (작은 글자에만) */
+  --mint-line: #5DCAA5;    /* 검색창 테두리 */
+  --mint: #E1F5EE;         /* 연한 민트 */
+  --mint-soft: #F2FAF7;    /* 더 연한 민트 */
+  --beige: #F1EBDD;        /* 도서관 베이지 */
+  --beige-text: #7A5A36;   /* 베이지 위 글자 */
+  --line: #E5E2D8;         /* 테두리 */
+  --page-bg: #ECE9DF;      /* 카드 바깥 화면 배경 */
+
+  /* 책등 장식 색 */
+  --spine-1: #1A6CAD;
+  --spine-2: #2C9652;
+  --spine-3: #EABE37;
+  --spine-4: #137C6B;
+  --spine-5: #C69866;
+
+  --font: "Pretendard", "Pretendard Variable", -apple-system, "Apple SD Gothic Neo",
+          "Noto Sans KR", "Malgun Gothic", sans-serif;
+}
+
+/* ---------- 2. 페이지 기본 ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;            /* 페이지 자체는 스크롤하지 않아요 */
+}
+
+.viewer {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+/* 카드 자리 — 크기는 main.js가 정해요 */
+.stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  box-shadow: 0 6px 24px rgba(44, 44, 42, 0.10);
+  touch-action: pan-y;         /* 세로 스크롤은 브라우저, 가로 스와이프는 우리가 처리 */
+  user-select: none;
+}
+
+.track {
+  display: flex;
+  width: max-content;
+  transform-origin: 0 0;
+  transition: transform 0.35s ease;
+}
+.track.dragging { transition: none; }
+
+/* ---------- 3. 아래 조작 줄 ---------- */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(100% - 32px, 540px);
+}
+
+.nav-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: var(--bg-white);
+  color: var(--green-dark);
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.nav-btn:hover:not(:disabled) { border-color: var(--mint-line); }
+.nav-btn:disabled { opacity: 0.35; cursor: default; }
+.nav-btn:focus-visible { outline: 3px solid var(--mint-line); outline-offset: 2px; }
+
+.progress { flex: 1; display: flex; align-items: center; gap: 10px; }
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.progress-bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width 0.35s ease;
+}
+.progress-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green-dark);
+  min-width: 52px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   카드 공통
+   ========================================================= */
+.card {
+  position: relative;
+  flex: none;
+  width: 540px;
+  height: 675px;
+  background: var(--bg-card);
+  overflow: hidden;
+  word-break: keep-all;      /* 한글 단어가 중간에서 끊기지 않게 */
+  overflow-wrap: break-word;
+}
+
+.card em { font-style: normal; color: var(--green); }
+
+/* ---------- 검색창 ---------- */
+.searchbar {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 5px 0 22px;
+  background: var(--bg-white);
+  border: 2.5px solid var(--mint-line);
+  border-radius: 999px;
+}
+.searchbar .query {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--green);
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* 검색 버튼 — 일반 돋보기 (큰 두두가 있는 카드용) */
+.search-btn {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.search-btn.icon { background: var(--green); }
+.search-btn.icon svg { width: 20px; height: 20px; }
+
+/* 검색 버튼 — 돋보기 두두 (나머지 카드용) */
+.search-btn.dodu {
+  background: var(--bg-white);
+  border: 2px solid var(--mint-line);
+  overflow: hidden;
+}
+.search-btn.dodu img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- 검색 헤더 + 탭 ---------- */
+.search-header {
+  background: var(--bg-white);
+  padding: 18px 22px 0;
+  border-bottom: 1px solid var(--line);
+}
+.tabs {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+  font-size: 15px;
+  color: var(--text-mute);
+}
+.tabs li { list-style: none; padding: 6px 0 9px; position: relative; }
+.tabs button {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.tabs button:hover { color: var(--green-dark); }
+.tabs button:focus-visible { outline: 2px solid var(--mint-line); outline-offset: 3px; border-radius: 3px; }
+.tabs li.active { color: var(--green-dark); font-weight: 800; }
+.tabs li.active::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--mint-line);
+}
+
+/* ---------- 본문 영역 ---------- */
+.card-body { padding: 16px 22px 0; }
+
+.meta {
+  font-size: 13.5px;
+  color: var(--text-mute);
+}
+.meta b { color: var(--green); font-weight: 800; }
+
+.card-title {
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.28;
+  letter-spacing: -0.03em;
+}
+
+/* ---------- 청구기호 라벨 ---------- */
+.callno {
+  flex: none;
+  width: 46px;
+  height: 42px;
+  border-radius: 7px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+.callno.lib  { background: var(--beige); color: var(--beige-text); }
+.callno.info { background: var(--mint);  color: var(--green-dark); }
+
+/* ---------- 칩 ---------- */
+.chips-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-mute);
+  margin: 12px 0 6px;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip {
+  font-size: 12.5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-white);
+  border: 1px solid var(--line);
+  color: var(--text-sub);
+}
+
+/* ---------- 하단 줄 ---------- */
+.card-footer {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 50px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13.5px;
+  color: var(--text-sub);
+}
+.card-footer .tags { color: var(--green-dark); font-weight: 600; }
+.card-footer .page-no {
+  font-weight: 800;
+  color: var(--green-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 책등 장식 ---------- */
+.spines { display: flex; align-items: flex-end; gap: 3px; height: 24px; }
+.spines i { display: block; width: 10px; border-radius: 2px 2px 0 0; }
+.spines i:nth-child(1) { height: 18px; background: var(--spine-1); }
+.spines i:nth-child(2) { height: 24px; background: var(--spine-2); }
+.spines i:nth-child(3) { height: 15px; background: var(--spine-3); }
+.spines i:nth-child(4) { height: 21px; background: var(--spine-4); }
+.spines i:nth-child(5) { height: 16px; background: var(--spine-5); }
+
+/* =========================================================
+   표지 (COVER)
+   ========================================================= */
+.card.cover { padding: 26px 26px 0; }
+
+/* 아래쪽 바닥(베이지) */
+.cover .floor {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 38%;
+  background: var(--beige);
+}
+
+.cover .top-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cover .school {
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: var(--green);
+}
+.cover .top-chip {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--mint);
+  color: var(--green-dark);
+}
+.cover .subtitle {
+  position: relative;
+  margin-top: 30px;
+  font-size: 16px;
+  color: var(--text-sub);
+}
+.cover .cover-title {
+  position: relative;
+  margin-top: 8px;
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+.cover .searchbar {
+  position: relative;
+  z-index: 2;
+  margin-top: 22px;
+  height: 58px;
+  box-shadow: 0 5px 0 var(--mint);
+}
+.cover .searchbar .query { font-size: 17px; }
+.cover .search-btn { width: 46px; height: 46px; }
+
+.cover .cover-img {
+  position: absolute;
+  left: 50%;
+  bottom: 52px;
+  transform: translateX(-50%);
+  width: 390px;
+  height: auto;
+}
+
+.cover .cover-footer {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 52px;
+  padding: 0 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 2px solid var(--text);
+  background: var(--beige);
+  font-size: 13px;
+  color: var(--text-sub);
+}
+.cover .cover-footer .spacer { width: 62px; } /* 가운데 정렬을 맞추기 위한 빈칸 */
+
+/* =========================================================
+   A · 결과 리스트형
+   ========================================================= */
+.results {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.result {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 16px;
+  background: var(--bg-white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.result h3 {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--green-dark);
+  letter-spacing: -0.02em;
+}
+.result p {
+  margin-top: 2px;
+  font-size: 14.5px;
+  color: var(--text-sub);
+}
+
+/* A · 작은 버전 (항목이 많거나 칩이 많은 카드) */
+.compact .results { margin-top: 12px; gap: 6px; }
+.compact .result { padding: 8px 14px; }
+.compact .result h3 { font-size: 15.5px; }
+.compact .result p { font-size: 13.5px; }
+.compact .chips-label { margin-top: 10px; }
+.compact .chip { font-size: 12px; padding: 3px 9px; }
+
+/* A · 체크 목록 (07번 카드) */
+.callno .check { font-size: 15px; line-height: 1; }
+.is-check .result { padding: 14px 16px; }
+.is-check .result h3 { color: var(--text); font-weight: 700; font-size: 16.5px; }
+
+/* =========================================================
+   B · 지식 패널형
+   ========================================================= */
+.panel {
+  margin-top: 12px;
+  background: var(--bg-white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.panel-top {
+  background: var(--mint);
+  padding: 18px 20px 16px;
+}
+.panel-top .small { font-size: 13px; font-weight: 800; color: var(--green-dark); }
+.panel-top .big {
+  margin-top: 2px;
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--green-dark);
+}
+.panel-top .sub { margin-top: 6px; font-size: 14.5px; color: var(--text); }
+
+.panel table {
+  width: calc(100% - 40px);
+  margin: 4px 20px 6px;
+  border-collapse: collapse;
+  font-size: 14.5px;
+}
+.panel th, .panel td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  line-height: 1.45;
+}
+.panel tr:first-child th, .panel tr:first-child td { border-top: 0; }
+.panel th { width: 128px; padding-right: 12px; font-weight: 500; color: var(--text-mute); }
+.panel td { color: var(--text); }
+.panel td b { color: var(--green); font-weight: 800; }
+.panel thead th {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-mute);
+  padding: 10px 0 4px;
+}
+.panel thead + tbody tr:first-child th,
+.panel thead + tbody tr:first-child td { border-top: 1px solid var(--line); }
+
+.type-B .chips-label { margin-top: 16px; font-size: 13px; }
+.type-B .chip {
+  background: var(--beige);
+  border-color: var(--beige);
+  color: var(--beige-text);
+  font-size: 13px;
+  padding: 5px 12px;
+}
+
+/* B · 아래 작은 상자 (19번 정시) */
+.mini-box {
+  margin-top: 10px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  background: var(--mint-soft);
+  border: 1px solid var(--mint);
+}
+.mini-box strong { display: block; font-size: 13px; font-weight: 800; color: var(--green-dark); }
+.mini-box p { margin-top: 3px; font-size: 13.5px; color: var(--text); line-height: 1.45; }
+.note { margin-top: 8px; font-size: 12px; color: var(--text-mute); line-height: 1.45; }
+
+/* 19번처럼 내용이 많은 패널은 조금 작게 */
+.tight .panel-top { padding: 14px 20px 12px; }
+.tight .panel-top .big { font-size: 32px; }
+.tight .panel th, .tight .panel td { padding: 8px 0; font-size: 13.5px; }
+.tight .panel th { width: 150px; }
+
+/* =========================================================
+   C · 이미지 탭형
+   ========================================================= */
+.photo-grid {
+  position: absolute;
+  left: 22px; right: 22px;
+  top: 268px;
+  bottom: 54px;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+}
+.photo {
+  position: relative;
+  margin: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--line);
+}
+.photo:first-child { grid-row: 1 / 3; }
+.photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo figcaption {
+  position: absolute;
+  left: 8px; bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--bg-white);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* =========================================================
+   D · 챕터 시작형 / 마지막 카드 공통
+   ========================================================= */
+.type-D, .type-end { padding: 22px 22px 0; }
+.type-D .searchbar, .type-end .searchbar { height: 56px; box-shadow: 0 5px 0 var(--mint); }
+/* 챕터 카드는 검색창을 더 크게, 조금 아래로 */
+.type-D { padding-top: 92px; }
+.type-D .searchbar { height: 66px; padding-left: 26px; border-width: 3px; box-shadow: 0 6px 0 var(--mint); }
+.type-D .searchbar .query { font-size: 21px; font-weight: 700; }
+.type-D .search-btn { width: 52px; height: 52px; }
+.type-D .search-btn.icon svg { width: 24px; height: 24px; }
+.type-D .chapter-meta { margin-top: 16px; font-size: 14px; }
+.type-D .searchbar .query, .type-end .searchbar .query { font-size: 17px; }
+.type-D .search-btn, .type-end .search-btn { width: 44px; height: 44px; }
+
+.chapter-meta {
+  margin-top: 14px;
+  padding: 0 6px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-mute);
+}
+.chapter-meta b { color: var(--green); font-weight: 800; }
+.chapter-meta .page-no { font-weight: 800; color: var(--green-dark); font-variant-numeric: tabular-nums; }
+
+.chapter-label {
+  margin-top: 30px;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  color: var(--green);
+}
+.chapter-title {
+  margin-top: 10px;
+  padding: 0 2px;
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.toc {
+  position: absolute;
+  left: 26px;
+  bottom: 34px;
+  z-index: 1;
+  width: 262px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+}
+.toc li {
+  padding: 11px 14px;
+  background: var(--bg-white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+}
+.toc li b { color: var(--green); font-weight: 800; margin-right: 6px; }
+
+/* 목차가 5개 이상일 때 */
+.toc.dense { gap: 6px; }
+.toc.dense li { padding: 8px 14px; font-size: 14px; }
+
+/* =========================================================
+   T · 학년별 표
+   ========================================================= */
+.year-table {
+  width: 100%;
+  margin-top: 14px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--bg-white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  table-layout: fixed;
+}
+.year-table thead th {
+  padding: 6px 10px;
+  background: var(--mint);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--green-dark);
+  text-align: left;
+}
+.year-table thead th:first-child { width: 62px; }
+.year-table tbody th {
+  padding: 7px 0 7px 12px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--beige-text);
+  text-align: left;
+  vertical-align: top;
+  background: var(--beige);
+}
+.year-table td {
+  padding: 6px 10px;
+  vertical-align: top;
+  font-size: 12.5px;
+  line-height: 1.38;
+  color: var(--text);
+}
+.year-table td span { display: block; }   /* 과목 하나에 한 줄 */
+.type-T .card-title { font-size: 24px; }
+.year-table tbody tr + tr th,
+.year-table tbody tr + tr td { border-top: 1px solid var(--line); }
+.year-table td + td { border-left: 1px solid var(--line); }
+
+.chapter-img {
+  position: absolute;
+  right: 12px;
+  bottom: 14px;
+  height: 300px;
+  width: 250px;
+  object-fit: contain;
+  object-position: right bottom;
+}
+
+/* 책등 띠 (카드 맨 아래) */
+.spine-band {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 10px;
+  background: var(--green);   /* 여러 색 책등 무늬 → 단색 초록 띠로 깔끔하게 */
+}
+
+/* =========================================================
+   E · Q&A형
+   ========================================================= */
+.qna { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.qna-item {
+  background: var(--bg-white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.qna-q { display: flex; gap: 10px; align-items: baseline; }
+.qna-q .q-mark { font-size: 20px; font-weight: 900; color: var(--spine-5); }
+.qna-q h3 { font-size: 16px; font-weight: 800; line-height: 1.4; letter-spacing: -0.02em; }
+.qna-who { margin: 2px 0 0 26px; font-size: 12.5px; color: var(--text-mute); }
+.qna-a {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--mint-soft);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.qna-a .accepted { display: block; font-size: 12.5px; font-weight: 800; color: var(--green-dark); margin-bottom: 2px; }
+
+/* =========================================================
+   마지막 카드
+   ========================================================= */
+.type-end .chapter-title { margin-top: 22px; font-size: 36px; }
+.links {
+  margin-top: 18px;
+  list-style: none;
+  background: var(--bg-white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 4px 18px;
+}
+.links li {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.links li:first-child { border-top: 0; }
+.links .name { flex: none; width: 88px; color: var(--text-mute); }
+.links a {
+  color: var(--green-dark);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--mint-line);
+  text-underline-offset: 3px;
+}
+.links a:focus-visible { outline: 2px solid var(--mint-line); outline-offset: 2px; border-radius: 3px; }
+
+.restart-btn {
+  position: absolute;
+  left: 26px;
+  bottom: 40px;
+  z-index: 1;
+  padding: 11px 18px;
+  border-radius: 999px;
+  border: 2px solid var(--mint-line);
+  background: var(--bg-white);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--green-dark);
+  cursor: pointer;
+}
+.restart-btn:hover { background: var(--mint-soft); }
+.restart-btn:focus-visible { outline: 3px solid var(--mint-line); outline-offset: 2px; }
+
+.end-img {
+  position: absolute;
+  right: 14px;
+  bottom: 16px;
+  width: 230px;
+  height: auto;
+}
+
+/* ---------- 움직임 줄이기 설정을 켠 사람에게는 애니메이션 끄기 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .track, .progress-bar span { transition: none; }
+  .caret { animation: none; }
+}

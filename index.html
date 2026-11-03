@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>대구대학교 문헌정보학과 카드뉴스</title>
+  <meta name="description" content="검색창으로 알아보는 대구대학교 문헌정보학과 — 고등학생을 위한 학과 소개 카드뉴스">
+  <!-- 글꼴: Pretendard -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="viewer" aria-roledescription="카드뉴스" aria-label="대구대학교 문헌정보학과 카드뉴스">
+    <!-- 카드가 놓이는 자리 -->
+    <div class="stage" id="stage">
+      <div class="track" id="track"></div>
+    </div>
+
+    <!-- 아래 조작 줄: 이전 / 진행 표시 / 다음 -->
+    <nav class="controls" aria-label="카드 넘기기">
+      <button class="nav-btn" id="prevBtn" type="button" aria-label="이전 카드">&#8592;</button>
+      <div class="progress">
+        <div class="progress-bar"><span id="progressFill"></span></div>
+        <span class="progress-text" id="progressText" aria-live="polite"></span>
+      </div>
+      <button class="nav-btn" id="nextBtn" type="button" aria-label="다음 카드">&#8594;</button>
+    </nav>
+  </main>
+
+  <!-- 카드 내용 데이터 → 화면 그리기 순서로 불러와요 -->
+  <script src="js/cards.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
