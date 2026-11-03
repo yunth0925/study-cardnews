@@ -21,13 +21,14 @@
   --line: #EBE3DA;         /* 테두리 */
   --page-bg: #EAE1D6;      /* 카드 바깥 화면 배경 */
 
-  /* 책등 장식 색 */
-  --spine-1: #1A6CAD;
-  --spine-2: #2C9652;
-  --spine-3: #EABE37;
-  --spine-4: #137C6B;
-  --spine-5: #C69866;
+  /* 책등 장식 색 — 갈색 톤으로 통일 */
+  --spine-1: #6B3E22;
+  --spine-2: #9A5B34;
+  --spine-3: #CFA27C;
+  --spine-4: #B07A52;
+  --spine-5: #8C5A3C;
 
+  --font-title: "Gowun Batang", "Nanum Myeongjo", serif;   /* 큰 제목용 명조 */
   --font: "Pretendard", "Pretendard Variable", -apple-system, "Apple SD Gothic Neo",
           "Noto Sans KR", "Malgun Gothic", sans-serif;
 }
@@ -753,4 +754,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .track, .progress-bar span { transition: none; }
   .caret { animation: none; }
+}
+
+/* ---------- 큰 제목은 명조체(고운바탕)로 ---------- */
+.card-title, .cover .cover-title, .panel-top .big, .chapter-title {
+  font-family: var(--font-title);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
