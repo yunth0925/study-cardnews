@@ -124,6 +124,24 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- 카드 위 안내 (제목 + 넘기는 방법) ---------- */
+.intro {
+  width: min(100% - 32px, 540px);
+  text-align: center;
+}
+.intro-title {
+  font-family: var(--font-title);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--green-dark);
+  letter-spacing: -0.01em;
+}
+.intro-hint {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-sub);
+}
+
 /* ---------- 카드 아래 버튼 (처음으로 / PDF 저장) ---------- */
 .extra-actions {
   display: flex;
@@ -794,7 +812,7 @@ body {
   html, body { height: auto; overflow: visible; background: #fff; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .viewer { display: block; height: auto; padding: 0; }
-  .controls, .extra-actions, .restart-btn { display: none !important; }
+  .intro, .controls, .extra-actions, .restart-btn { display: none !important; }
   .stage { width: auto !important; height: auto !important; overflow: visible; border-radius: 0 !important; box-shadow: none; }
   .track { display: block; width: auto; transform: none !important; transition: none; }
   .card { break-after: page; page-break-after: always; }

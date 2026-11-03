@@ -263,7 +263,8 @@
 
   /* ---------- 화면에 맞게 확대/축소 ---------- */
   function fit() {
-    const controlsH = 44 + 12 + 40 + 12 + 24; // 조작 줄 + 간격 + 아래 버튼 줄 + 간격 + 위아래 여백
+    const introH = document.querySelector(".intro").offsetHeight + 12; // 카드 위 안내 + 간격
+    const controlsH = introH + 44 + 12 + 40 + 12 + 24; // 위 안내 + 조작 줄 + 간격 + 아래 버튼 줄 + 간격 + 위아래 여백
     const availW = window.innerWidth;
     const availH = window.innerHeight - controlsH;
     scale = Math.min(availW / CARD_W, availH / CARD_H);
