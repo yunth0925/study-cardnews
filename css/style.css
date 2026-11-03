@@ -565,15 +565,15 @@ body {
    ========================================================= */
 .type-D, .type-end { padding: 22px 22px 0; }
 .type-D .searchbar, .type-end .searchbar { height: 56px; box-shadow: 0 5px 0 var(--mint); }
-/* 챕터 카드는 검색창을 더 크게, 조금 아래로 */
-.type-D { padding-top: 92px; }
+.type-end .searchbar .query { font-size: 17px; }
+.type-end .search-btn { width: 44px; height: 44px; }
+/* 챕터 카드는 검색창을 더 크게 (위 여백은 너무 크지 않게) */
+.type-D { padding-top: 40px; }
 .type-D .searchbar { height: 66px; padding-left: 26px; border-width: 3px; box-shadow: 0 6px 0 var(--mint); }
 .type-D .searchbar .query { font-size: 21px; font-weight: 700; }
 .type-D .search-btn { width: 52px; height: 52px; }
 .type-D .search-btn.icon svg { width: 24px; height: 24px; }
 .type-D .chapter-meta { margin-top: 16px; font-size: 14px; }
-.type-D .searchbar .query, .type-end .searchbar .query { font-size: 17px; }
-.type-D .search-btn, .type-end .search-btn { width: 44px; height: 44px; }
 
 .chapter-meta {
   margin-top: 14px;
