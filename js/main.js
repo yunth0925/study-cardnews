@@ -332,7 +332,35 @@
      - jsPDF: 그림들을 모아 PDF 파일로 만들어 주는 도구
      두 도구는 버튼을 처음 누를 때만 불러와요. */
   const PDF_FILE = "대구대_문헌정보학과_카드뉴스.pdf";
-  const PDF_SCALE = 2;  // 2배 해상도로 찍어서 글자가 선명하게
+  const PDF_SCALE = 2;    // 2배 해상도로 찍어서 글자가 선명하게
+  const PDF_MARGIN = 16;  // 카드 바깥 베이지 테두리 두께 (화면에서 보는 모습처럼)
+  const PDF_RADIUS = 18;  // 카드 둥근 모서리
+  const PDF_PAGE_W = CARD_W + PDF_MARGIN * 2;
+  const PDF_PAGE_H = CARD_H + PDF_MARGIN * 2;
+
+  // 찍은 카드를 베이지 배경 위에 둥근 모서리로 올려요
+  function framed(cardCanvas) {
+    const k = PDF_SCALE;
+    const out = document.createElement("canvas");
+    out.width = PDF_PAGE_W * k;
+    out.height = PDF_PAGE_H * k;
+    const ctx = out.getContext("2d");
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--page-bg").trim() || "#EAE1D6";
+    ctx.fillRect(0, 0, out.width, out.height);
+    const x = PDF_MARGIN * k, y = PDF_MARGIN * k, w = CARD_W * k, h = CARD_H * k, r = PDF_RADIUS * k;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(cardCanvas, x, y, w, h);
+    ctx.restore();
+    return out;
+  }
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -395,7 +423,7 @@
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
 
       const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [CARD_W, CARD_H], hotfixes: ["px_scaling"] });
+      const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [PDF_PAGE_W, PDF_PAGE_H], hotfixes: ["px_scaling"] });
       const cardEls = track.querySelectorAll(".card");
 
       for (let i = 0; i < cardEls.length; i++) {
@@ -413,8 +441,8 @@
           scrollY: 0,
           onclone: (doc) => prepareClone(doc, i)
         });
-        if (i > 0) pdf.addPage([CARD_W, CARD_H], "portrait");
-        pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, CARD_W, CARD_H);
+        if (i > 0) pdf.addPage([PDF_PAGE_W, PDF_PAGE_H], "portrait");
+        pdf.addImage(framed(canvas).toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, PDF_PAGE_W, PDF_PAGE_H);
       }
       pdf.save(PDF_FILE);
     } catch (err) {
